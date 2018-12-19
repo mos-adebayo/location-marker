@@ -74,7 +74,7 @@ class App extends React.Component {
     };
 
     populateMap = (location) => {
-        const { map, markersLayer } = this.state;
+        let { map, markersLayer, markers } = this.state;
         markersLayer.setMarkersData([location])
             .addMarkers();
         const viewport = location.viewport;
@@ -83,12 +83,62 @@ class App extends React.Component {
         } else {
             map.fitBounds(markersLayer.getBounds());
         }
+
+        markers.push(location);
+        this.setState({markers})
+
     };
 
+    removeMarker = (e, target) => {
+        const { markers, markersLayer } = this.state;
+        target = [target];
+        e.preventDefault();
+
+        markersLayer.clearLayers();
+
+        let resultantMarkers = markers.filter(x => !target.includes(x));
+
+        markersLayer.setMarkersData(resultantMarkers).addMarkers();
+
+        this.setState({markers: resultantMarkers})
+
+    }
+
     render() {
+        const { markers } = this.state;
         return (
-            <div>
-                <div id = 'map'></div>
+            <div className={'row'}>
+                <div className="col s6">
+                    <div id = 'map'></div>
+                </div>
+                <div className="col s6">
+                    <h4>Address</h4>
+                    {
+                        markers.map((item, key) => {
+                            return (<div key={key} className={'col s6'}>
+                                <div className="card">
+                                    <div className="card-content">
+                                        <p>{item.address.freeformAddress}</p>
+                                        <p>
+                                            Lat: {item.position.lat}
+                                        </p>
+                                        <p>
+                                            Lng: {item.position.lon}
+                                        </p>
+                                    </div>
+                                    <div className="card-content grey lighten-4">
+                                        <a href={'/'} className={''}>
+                                            <i className="material-icons">create</i>
+                                        </a>
+                                        &nbsp;<a onClick={(e) =>this.removeMarker(e, item)} href={'/'} className={'text-red'}>
+                                        <i className="material-icons red-text">delete</i>
+                                    </a>
+                                    </div>
+                                </div>
+                            </div>)
+                        })
+                    }
+                </div>
             </div>
 
         )
