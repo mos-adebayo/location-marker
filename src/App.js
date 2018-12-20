@@ -104,12 +104,27 @@ class App extends React.Component {
 
     }
 
+    locateMarker = (e, target) => {
+        e.preventDefault();
+        this.positionMap(target.viewport)
+
+    }
+
+    positionMap = (viewport) => {
+        const { map , markersLayer } = this.state;
+        if (viewport) {
+            map.fitBounds([viewport.topLeftPoint, viewport.btmRightPoint]);
+        } else {
+            map.fitBounds(markersLayer.getBounds());
+        }
+    }
+
     render() {
         const { markers } = this.state;
         return (
             <div className={'row'}>
                 <div className="col s6">
-                    <div id = 'map'></div>
+                    <div id = 'map'>&nbsp;</div>
                 </div>
                 <div className="col s6">
                     <h4>Address</h4>
@@ -127,7 +142,7 @@ class App extends React.Component {
                                         </p>
                                     </div>
                                     <div className="card-content grey lighten-4">
-                                        <a href={'/'} className={''}>
+                                        <a onClick={(e) => this.locateMarker(e, item)} href={'/'} className={''}>
                                             <i className="material-icons">create</i>
                                         </a>
                                         &nbsp;<a onClick={(e) =>this.removeMarker(e, item)} href={'/'} className={'text-red'}>
