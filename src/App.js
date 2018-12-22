@@ -1,14 +1,20 @@
 import React from 'react';
 import './App.css';
+import {connect} from "react-redux";
+import { commonService } from "./_service";
+import Loader from "./Loader";
+import {requestingActions} from "./_actions/requesting.action";
+import {appConstants} from "./_constant";
 
 class App extends React.Component {
     constructor(props) {
         super(props);
         this.state ={
-            markers: [],
+            locations: [],
             map : null,
             markerOptions : null,
-            markersLayer: null
+            markersLayer: null,
+            addMarkerManually: true
         }
     }
 
@@ -21,35 +27,27 @@ class App extends React.Component {
             this.initiateMap()
         }
     }
-
     initiateMap = () => {
-        let { map, markers } = this.state;
-        let markerOptions = {
-            icon: window.tomtom.L.svgIcon({
-                icon: {
-                    icon: 'fa fa-camera',
-                    iconSize: [32, 37],
-                    iconAnchor: [16, 2],
-                    style: {
-                        color: '#fff'
-                    },
-                    noPlainSVG: true
-                }
-            })
-        };
-         map = window.tomtom.L.map('map', {
+        const { dispatch } = this.props;
+
+        dispatch(requestingActions.start());
+
+        commonService.getLocations()
+            .then(locations => {
+                dispatch(requestingActions.stop());
+                this.setState({locations});
+                this.addMarkersOnMap(locations);
+                console.log('loc', locations);
+            });
+
+         const map = window.tomtom.L.map('map', {
             source: 'vector',
             key: 'oxmt4h5p1PFToAykPhSSHQtoOfM35VVx',
             basePath: '/sdk',
             zoom: 15
         });
-
-        markers.map((item) => {
-             return window.tomtom.L.marker([item.lat, item.lng], markerOptions).addTo(map);
-         });
-
-        //todo set default to location
-        map.setView([39, -97.5], 4);
+         //todo set map to current location
+        map.setView([10, 10], appConstants.MAP_ZOOM_LEVEL);
 
         // SearchBox with location button and Polish language
         let searchBoxInstance = new window.tomtom.L.SearchBox({
@@ -62,45 +60,108 @@ class App extends React.Component {
         });
         searchBoxInstance.addTo(map);
 
-        // Marker layer to display the results over the map
-        let markersLayer = window.tomtom.L.tomTomMarkersLayer().addTo(map);
-
         // Add a marker to indicate the position of the result selected by the user
         searchBoxInstance.on(searchBoxInstance.Events.ResultClicked, (result) => {
-            this.populateMap(result.data);
+            this.createMarker(result.data);
         });
 
-        this.setState({map, markersLayer})
+        this.setState({map})
     };
 
-    populateMap = (location) => {
-        let { map, markersLayer, markers } = this.state;
-        markersLayer.setMarkersData([location])
-            .addMarkers();
-        const viewport = location.viewport;
-        if (viewport) {
-            map.fitBounds([viewport.topLeftPoint, viewport.btmRightPoint]);
-        } else {
-            map.fitBounds(markersLayer.getBounds());
-        }
+    addMarkersOnMap = (location) =>{
+        location.map((item) => {
+            return this.addMarkerToMap(item)
+        });
+    };
 
-        markers.push(location);
-        this.setState({markers})
+    fetchLocations = () => {
+        const { dispatch } = this.props;
+        dispatch(requestingActions.start());
+        return commonService.getLocations()
+            .then(locations => {
+                dispatch(requestingActions.stop());
+                this.setState({locations});
+            });
+    }
+    createMarker = (location) => {
+        commonService.createLocation({
+            address: location.address.freeformAddress,
+            latitude: location.position.lat,
+            longitude: location.position.lon,
+            country: location.address.country,
+            countryCode: location.address.countryCode,
+        }).then(location => {
+            const { locations } = this.state;
+            locations.push(location);
+            this.setState({locations});
+            this.addMarkerToMap(location);
+        }).catch(err =>{
+
+        })
 
     };
+
+    addMarkerToMap = (location) => {
+        const { map } = this.state;
+        const marker = window.tomtom.L.marker([location.latitude, location.longitude], {
+            draggable: true
+        }).bindPopup(location.address)
+            .addTo(map);
+
+        marker.on('dragend',  (e) => {
+            this.editMarker(e, marker, location.id);
+        });
+
+        map.setView([location.latitude, location.longitude], appConstants.MAP_ZOOM_LEVEL);
+
+    };
+
+    editMarker = (mark, marker, id) => {
+        this.setState({allowAddMarker: false});
+        const { dispatch } = this.props;
+        dispatch(requestingActions.start());
+
+       window.tomtom.reverseGeocode({position: mark.target.getLatLng()})
+            .go( (response) => {
+                const position = response.position.split(",");
+                commonService.updateLocation({
+                    address: response.address.freeformAddress,
+                    latitude: position[0],
+                    longitude: position[1],
+                    country: response.address.country,
+                    countryCode: response.address.countryCode,
+                    id
+                }).then(res =>{
+                    if (response && response.address && response.address.freeformAddress) {
+                        marker.setPopupContent(response.address.freeformAddress);
+                    } else {
+                        marker.setPopupContent('No results found');
+                    }
+                    marker.openPopup();
+                    dispatch(requestingActions.stop());
+                    this.fetchLocations();
+                });
+            })
+    }
 
     removeMarker = (e, target) => {
-        const { markers, markersLayer } = this.state;
-        target = [target];
+        const { dispatch } = this.props;
         e.preventDefault();
 
-        markersLayer.clearLayers();
+        if(window.confirm("Are you sure you want to remove this marker?")){
+            dispatch(requestingActions.start());
+            //delete marker
+            commonService.removeLocation({
+                id: target.id
+            }).then(res =>{
+                this.fetchLocations();
+                window.location.reload();
+            }).catch(err =>{
+                dispatch(requestingActions.stop());
+                window.alert('Currently unable to remove data')
+            });
 
-        let resultantMarkers = markers.filter(x => !target.includes(x));
-
-        markersLayer.setMarkersData(resultantMarkers).addMarkers();
-
-        this.setState({markers: resultantMarkers})
+        }
 
     }
 
@@ -120,25 +181,31 @@ class App extends React.Component {
     }
 
     render() {
-        const { markers } = this.state;
+        const { locations } = this.state;
+        const {  requesting } = this.props;
         return (
-            <div className={'row'}>
+            <div>
+                {
+                    requesting &&
+                    <Loader/>
+                }
+                <div className={'row'}>
                 <div className="col s6">
                     <div id = 'map'>&nbsp;</div>
                 </div>
                 <div className="col s6">
                     <h4>Address</h4>
                     {
-                        markers.map((item, key) => {
+                        locations.map((item, key) => {
                             return (<div key={key} className={'col s6'}>
                                 <div className="card">
                                     <div className="card-content">
-                                        <p>{item.address.freeformAddress}</p>
+                                        <p>{item.address}</p>
                                         <p>
-                                            Lat: {item.position.lat}
+                                            Lat: {item.latitude}
                                         </p>
                                         <p>
-                                            Lng: {item.position.lon}
+                                            Lng: {item.longitude}
                                         </p>
                                     </div>
                                     <div className="card-content grey lighten-4">
@@ -155,8 +222,16 @@ class App extends React.Component {
                     }
                 </div>
             </div>
-
+            </div>
         )
     }
 }
-export default App;
+
+function mapStateToProps(state, ownProps) {
+    const { locations, requesting } = state;
+    return {
+        locations,
+        requesting
+    };
+}
+export default connect(mapStateToProps)(App);
