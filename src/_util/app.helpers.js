@@ -1,44 +1,46 @@
 import axios from "axios";
 import moment from "moment/moment";
+import {appConstants} from "../_constant";
 
 export const appHelpers = {
-    formatDate: d => {
-        return (d) ? moment((d).split('T')[0]).format('MMM DD, YYYY') : '';
+    formatDate: (d, format) => {
+        return moment(d).format(format || "MMM DD, YYYY");
+    },
+    interpretError : error => {
+        let errorMessage;
+        if (error.response) {
+            // The request was made and the server responded with a status code
+            // that falls out of the range of 2xx
+            if(error.response.status === 500){
+                errorMessage = "Oops, something went wrong";
+            }else if(error.response.status === 404){
+                errorMessage = "Resource not found";
+            }else{
+                errorMessage = "Oops, unable to process request"
+            }
+        } else if (error.request) {
+            // The request was made but no response was received
+            // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
+            // http.ClientRequest in node.js
+            errorMessage = 'Connection refused';
+        } else {
+            // Something happened in setting up the request that triggered an Error
+            errorMessage = error.message;
+        }
+        return errorMessage;
     },
 
-    getRequest: function (url, header) {
+    getRequest: function (url) {
         let reqHeader = { "Content-Type": "application/json" };
-
         let config = { headers: reqHeader };
-        // console.log(config);
         return axios
             .get(url, config)
             .then(function (res) {
-                return res.data;
+                return {status: appConstants.REQUEST_SUCCESS, data: res.data}
             })
-            .catch(function (error) {
-                if (error.response) {
-                    // The request was made and the server responded with a status code
-                    // that falls out of the range of 2xx
-                    // console.log(error.response.data);
-                    // console.log(error.response.status);
-                    // console.log(error.response.headers);
-                    return error.response.data;
-                    // return {statTs: appConstants.REQUEST_FAILURE, data: error.response.data};
-
-                } else if (error.request) {
-                    // The request was made but no response was received
-                    // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
-                    // http.ClientRequest in node.js
-                    // console.log(error.request);
-                    // return {status: appConstants.REQUEST_FAILURE, data: error.request};
-                    return error.request;
-                } else {
-                    // Something happened in setting up the request that triggered an Error
-                    // console.log('Error', error.message);
-                    // return {status: appConstants.REQUEST_FAILURE, data: error.message};
-                    return error.message;
-                }
+            .catch( (error) =>  {
+                const errorMessage = this.interpretError(error);
+                return { status: appConstants.REQUEST_ERROR, error: errorMessage}
             });
     },
     postRequest: function (url, payload) {
@@ -48,30 +50,10 @@ export const appHelpers = {
 
         return axios.post(url, payload, config)
             .then(res => {
-                return res.data;
-            }).catch(function (error) {
-                if (error.response) {
-                    // The request was made and the server responded with a status code
-                    // that falls out of the range of 2xx
-                    // console.log(error.response.data);
-                    // console.log(error.response.status);
-                    // console.log(error.response.headers);
-                    return error.response.data;
-                    // return {statTs: appConstants.REQUEST_FAILURE, data: error.response.data};
-
-                } else if (error.request) {
-                    // The request was made but no response was received
-                    // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
-                    // http.ClientRequest in node.js
-                    // console.log(error.request);
-                    // return {status: appConstants.REQUEST_FAILURE, data: error.request};
-                    return error.request;
-                } else {
-                    // Something happened in setting up the request that triggered an Error
-                    // console.log('Error', error.message);
-                    // return {status: appConstants.REQUEST_FAILURE, data: error.message};
-                    return error.message;
-                }
+                return {status: appConstants.REQUEST_SUCCESS, data: res.data}
+            }).catch((error) => {
+                const errorMessage = this.interpretError(error);
+                return {status: appConstants.REQUEST_ERROR, error: errorMessage}
             });
     },
     putRequest: function (url, payload) {
@@ -81,30 +63,10 @@ export const appHelpers = {
 
         return axios.put(url, payload, config)
             .then(res => {
-                return res.data;
-            }).catch(function (error) {
-                if (error.response) {
-                    // The request was made and the server responded with a status code
-                    // that falls out of the range of 2xx
-                    // console.log(error.response.data);
-                    // console.log(error.response.status);
-                    // console.log(error.response.headers);
-                    return error.response.data;
-                    // return {statTs: appConstants.REQUEST_FAILURE, data: error.response.data};
-
-                } else if (error.request) {
-                    // The request was made but no response was received
-                    // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
-                    // http.ClientRequest in node.js
-                    // console.log(error.request);
-                    // return {status: appConstants.REQUEST_FAILURE, data: error.request};
-                    return error.request;
-                } else {
-                    // Something happened in setting up the request that triggered an Error
-                    // console.log('Error', error.message);
-                    // return {status: appConstants.REQUEST_FAILURE, data: error.message};
-                    return error.message;
-                }
+                return {status: appConstants.REQUEST_SUCCESS, data: res.data}
+            }).catch((error) => {
+                const errorMessage = this.interpretError(error);
+                return {status: appConstants.REQUEST_ERROR, error: errorMessage}
             });
     },
     deleteRequest: function (url) {
@@ -114,30 +76,10 @@ export const appHelpers = {
 
         return axios.delete(url, config)
             .then(res => {
-                return res.data;
-            }).catch(function (error) {
-                if (error.response) {
-                    // The request was made and the server responded with a status code
-                    // that falls out of the range of 2xx
-                    // console.log(error.response.data);
-                    // console.log(error.response.status);
-                    // console.log(error.response.headers);
-                    return error.response.data;
-                    // return {statTs: appConstants.REQUEST_FAILURE, data: error.response.data};
-
-                } else if (error.request) {
-                    // The request was made but no response was received
-                    // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
-                    // http.ClientRequest in node.js
-                    // console.log(error.request);
-                    // return {status: appConstants.REQUEST_FAILURE, data: error.request};
-                    return error.request;
-                } else {
-                    // Something happened in setting up the request that triggered an Error
-                    // console.log('Error', error.message);
-                    // return {status: appConstants.REQUEST_FAILURE, data: error.message};
-                    return error.message;
-                }
+                return {status: appConstants.REQUEST_SUCCESS, data: res.data}
+            }).catch((error) => {
+                const errorMessage = this.interpretError(error);
+                return {status: appConstants.REQUEST_ERROR, error: errorMessage}
             });
     },
   interpretErrorResponse(error) {
@@ -151,14 +93,6 @@ export const appHelpers = {
     }else{
         errorMessage = "Something went wrong!"
     }
-
-    /*if (error.response === undefined) {
-      errorMessage = "Please check your internet connectivity!";
-    } else {
-      errorMessage = error.response.data
-        ? error.response.data
-        : "Unable to handle request";
-    }*/
     if (typeof errorMessage === "string") {
       return errorMessage;
     }

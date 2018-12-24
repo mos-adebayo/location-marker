@@ -6,6 +6,8 @@ import {requestingActions} from "../../_actions/requesting.action";
 import {appConstants} from "../../_constant";
 import LocationItemsComponent from "./locations.items";
 import EmptyRecord from "../shared/EmptyRecord";
+import { AppErrorMessage, ComponentErrorMessage } from "../shared/PageError";
+import {errorActions} from "../../_actions/error.action";
 
 class App extends React.Component {
     constructor(props) {
@@ -15,7 +17,8 @@ class App extends React.Component {
             map : null,
             markerOptions : null,
             markersLayer: null,
-            addMarkerManually: true
+            addMarkerManually: true,
+            componentError: false,
         }
     }
 
@@ -36,8 +39,12 @@ class App extends React.Component {
         commonService.getLocations()
             .then(locations => {
                 dispatch(requestingActions.stop());
-                this.setState({locations});
-                this.addMarkersOnMap(locations);
+                if(locations.status === appConstants.REQUEST_SUCCESS){
+                    this.setState({locations : locations.data});
+                    this.addMarkersOnMap(locations.data);
+                }else if (locations.status === appConstants.REQUEST_ERROR){
+                    this.setState({componentError: locations.error})
+                }
             });
 
         const map = window.tomtom.L.map('map', {
@@ -78,26 +85,38 @@ class App extends React.Component {
         const { dispatch } = this.props;
         dispatch(requestingActions.start());
         return commonService.getLocations()
-            .then(locations => {
+            .then(response => {
                 dispatch(requestingActions.stop());
-                this.setState({locations});
+                if(response.status === appConstants.REQUEST_SUCCESS) {
+                    const locations = response.data;
+                    this.setState({locations});
+                }else if (response.status === appConstants.REQUEST_ERROR){
+                    dispatch(errorActions.setError(response.error));
+                }
             });
     }
     createMarker = (location) => {
         const { dispatch } = this.props;
         dispatch(requestingActions.start());
+        dispatch(errorActions.clearError());
         commonService.createLocation({
             address: location.address.freeformAddress,
             latitude: location.position.lat,
             longitude: location.position.lon,
             country: location.address.country,
             countryCode: location.address.countryCode,
-        }).then(location => {
+        }).then(response => {
             dispatch(requestingActions.stop());
-            const { locations } = this.state;
-            locations.push(location);
-            this.setState({locations});
-            this.addMarkerToMap(location);
+            if(response.status === appConstants.REQUEST_SUCCESS){
+                const { locations } = this.state;
+                const location = response.data;
+                locations.push(location);
+                this.setState({locations});
+                this.addMarkerToMap(location);
+            }else if (response.status === appConstants.REQUEST_ERROR){
+                dispatch(errorActions.setError(response.error));
+            }
+
         }).catch(err =>{
             dispatch(requestingActions.stop());
         })
@@ -123,10 +142,16 @@ class App extends React.Component {
         this.setState({allowAddMarker: false});
         const { dispatch } = this.props;
         dispatch(requestingActions.start());
+        dispatch(errorActions.clearError());
 
         window.tomtom.reverseGeocode({position: mark.target.getLatLng()})
             .go( (response) => {
                 const position = response.position.split(",");
+                if (response && response.address && response.address.freeformAddress) {
+                    marker.setPopupContent(response.address.freeformAddress);
+                } else {
+                    marker.setPopupContent('No results found');
+                }
                 commonService.updateLocation({
                     address: response.address.freeformAddress,
                     latitude: position[0],
@@ -134,15 +159,14 @@ class App extends React.Component {
                     country: response.address.country,
                     countryCode: response.address.countryCode,
                     id
-                }).then(res =>{
-                    if (response && response.address && response.address.freeformAddress) {
-                        marker.setPopupContent(response.address.freeformAddress);
-                    } else {
-                        marker.setPopupContent('No results found');
-                    }
+                }).then(response =>{
                     marker.openPopup();
                     dispatch(requestingActions.stop());
-                    this.fetchLocations();
+                    if(response.status === appConstants.REQUEST_SUCCESS) {
+                        this.fetchLocations();
+                    }else if (response.status === appConstants.REQUEST_ERROR) {
+                        dispatch(errorActions.setError(response.error));
+                    }
                 });
             })
     }
@@ -150,22 +174,18 @@ class App extends React.Component {
     removeMarker = (e, target) => {
         const { dispatch } = this.props;
         e.preventDefault();
-
         if(window.confirm("Are you sure you want to remove this marker?")){
             dispatch(requestingActions.start());
-            //delete marker
             commonService.removeLocation({
                 id: target.id
-            }).then(res =>{
-                this.fetchLocations();
-                window.location.reload();
-            }).catch(err =>{
-                dispatch(requestingActions.stop());
-                window.alert('Currently unable to remove data')
-            });
-
+            }).then(response =>{
+                if(response.status === appConstants.REQUEST_SUCCESS) {
+                    window.location.reload();
+                }else if (response.status === appConstants.REQUEST_ERROR) {
+                    dispatch(errorActions.setError(response.error));
+                }
+            })
         }
-
     }
 
     locateMarker = (e, target) => {
@@ -175,8 +195,8 @@ class App extends React.Component {
     }
 
     render() {
-        const { locations } = this.state;
-        const {  requesting } = this.props;
+        const { locations, componentError } = this.state;
+        const {  requesting, error } = this.props;
         return (
             <div>
                 {
@@ -188,20 +208,39 @@ class App extends React.Component {
                         <div id = 'map'>&nbsp;</div>
                     </div>
                     <div className="col s6">
-                        <div className="section">
-                            <h5 className={'col s12 records-header'}>
-                                My Locations
-                            </h5>
-                        </div>
+
                         {
-                            locations.map((item, key) => {
-                                return (<div key={key} className={'col s6'}>
-                                    <LocationItemsComponent location={item} locateMarker={this.locateMarker} removeMarker={this.removeMarker}/>
-                                </div>)
-                            })
+                            error &&
+                            <AppErrorMessage message={error}/>
                         }
+
+                        {componentError && !requesting &&
+                            <ComponentErrorMessage message={componentError}/>
+                        }
+                        {((!componentError && !requesting) || (locations.length !== 0)) &&
+                             (
+                                 <div>
+                                     <div className="section">
+                                         <h5 className={'col s12 records-header'}>
+                                             My Locations
+                                         </h5>
+                                     </div>
+                                     <div>
+                                         {
+                                             locations.map((item, key) => {
+                                                 return (<div key={key} className={'col s6'}>
+                                                     <LocationItemsComponent location={item} locateMarker={this.locateMarker} removeMarker={this.removeMarker}/>
+                                                 </div>)
+                                             })
+                                         }
+                                     </div>
+                                 </div>
+
+                             )
+                        }
+
                         {
-                            (!requesting && locations.length === 0)  &&
+                            (!requesting && locations.length === 0 && !componentError)  &&
                                 <EmptyRecord message={'No record yet!'}/>
                         }
                     </div>
@@ -212,10 +251,10 @@ class App extends React.Component {
 }
 
 function mapStateToProps(state, ownProps) {
-    const { locations, requesting } = state;
+    const { requesting, error } = state;
     return {
-        locations,
-        requesting
+        requesting,
+        error
     };
 }
 export default connect(mapStateToProps)(App);

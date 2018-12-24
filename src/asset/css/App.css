@@ -18,7 +18,7 @@ body,h1,h2,h3,h4,h5,p{
   display: flex;
   align-items: center;
   margin: 2px;
-  width: 420px;
+  width: 600px;
 }
 .input-container span, .input-container select {
   flex: 1;
@@ -33,4 +33,21 @@ html{height:100%}
 }
 .records-header{
   margin: 10px 0;
+}
+.app-error{
+  position: fixed;
+  right: 0;
+  padding: 5px 10px;
+  z-index: 9999;
+  width: 35%;
+}
+.card-footer{
+  padding: 8px 20px 5px 35px !important;
+}
+.card-footer .row{
+  margin-bottom: 0;
+}
+
+.leaflet-control-search .leaflet-control-search-input {
+  width: 100%;
 }

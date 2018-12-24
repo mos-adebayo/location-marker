@@ -1,10 +1,10 @@
 import { combineReducers } from 'redux';
 
-import { locations } from './location.reducer';
 import { requesting } from './requesting.reducer';
+import { error } from './error.reducer';
 
 const rootReducer = combineReducers({
-    locations,
+    error,
     requesting,
 });
 

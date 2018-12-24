@@ -1,6 +1,8 @@
 export const appConstants = {
     BASE_URL : 'http://localhost:1337',
     /*Action Types*/
+    SET_ERROR : 'set_error',
+    CLEAR_ERROR : 'clear_error',
     START_REQUEST : 'start_request',
     STOP_REQUEST : 'stop_request',
     ALL_LOCATIONS : 'all_locations',
@@ -10,5 +12,7 @@ export const appConstants = {
     APP_ERROR : 'error',
 
     MAP_ZOOM_LEVEL: 8,
-    MAP_EXTRA_ZOOM_LEVEL: 12
+    MAP_EXTRA_ZOOM_LEVEL: 12,
+    REQUEST_ERROR: 1,
+    REQUEST_SUCCESS: 2
 }

@@ -1,4 +1,4 @@
 export const initialState = {
-    locations: [],
+    error: null,
     requesting: false,
 };
