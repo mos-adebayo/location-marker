@@ -12,7 +12,7 @@ import {appHelpers} from "../../_util";
 import { Scrollbars } from 'react-custom-scrollbars';
 const documentHeight = window.innerHeight;
 
-class App extends React.Component {
+export class Location extends React.Component {
     constructor(props) {
         super(props);
         this.state ={
@@ -39,6 +39,10 @@ class App extends React.Component {
             this.initiateMap()
         }
     }
+    setComponentError = (componentError = false) => {
+      this.setState({componentError})
+    };
+
     initiateMap = () => {
         const { dispatch } = this.props;
 
@@ -54,7 +58,7 @@ class App extends React.Component {
                         if(window.tomtom)
                             this.addMarkersOnMap(locations.data);
                     }else if (locations.status === appConstants.REQUEST_ERROR){
-                        this.setState({componentError: locations.error})
+                        this.setComponentError(locations.error)
                     }
                 });
 
@@ -263,4 +267,4 @@ function mapStateToProps(state, ownProps) {
         error
     };
 }
-export default connect(mapStateToProps)(App);
+export default connect(mapStateToProps)(Location);

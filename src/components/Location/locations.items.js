@@ -19,11 +19,11 @@ const LocationItemComponent = ({location, locateMarker, removeMarker}) => {
             <div className="card-footer card-content grey lighten-4">
                <div className="row">
                     <div className={'left'}>
-                        <a onClick={(e) => locateMarker(e, location)} href={'/'} className={''}>
+                        <a onClick={(e) => locateMarker(e, location)} href={'/'} className={'locate-icon'}>
                             <i className="tiny material-icons">search</i>
                         </a>
                              &nbsp;
-                        <a onClick={(e) => removeMarker(e, location)} href={'/'} className={'text-red'}>
+                        <a onClick={(e) => removeMarker(e, location)} href={'/'} className={'text-red remove-icon'}>
                              <i className="tiny material-icons red-text">delete</i>
                          </a>
                     </div>

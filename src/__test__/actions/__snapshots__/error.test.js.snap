@@ -1,0 +1,14 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Error Action Snapshot Dispatches the correct action and payload 1`] = `
+Array [
+  Object {
+    "error": "error",
+    "type": "set_error",
+  },
+  Object {
+    "error": "error",
+    "type": "set_error",
+  },
+]
+`;
