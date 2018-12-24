@@ -10,7 +10,7 @@ const LocationItemsComponent = ({location, locateMarker, removeMarker}) => {
                 </p>
                 <p className={'truncate'}>{location.address}</p>
                 <p className={'grey-text'}>
-                    <small>Marker</small>
+                    <small>Latitude, Longitude</small>
                 </p>
                 <p>
                     {location.latitude}, {location.longitude}
@@ -29,7 +29,7 @@ const LocationItemsComponent = ({location, locateMarker, removeMarker}) => {
                     </div>
                     <div className={'right'}>
                         <p className={'grey-text'}>
-                            {appHelpers.formatDate(location.createdAt)}
+                            <small>{appHelpers.formatDate(location.createdAt)}</small>
                         </p>
                     </div>
                </div>

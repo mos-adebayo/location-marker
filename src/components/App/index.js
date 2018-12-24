@@ -22,6 +22,7 @@ class App extends React.Component {
             markersLayer: null,
             addMarkerManually: true,
             componentError: false,
+            mapIsAvailable: true,
         }
     }
 
@@ -43,33 +44,41 @@ class App extends React.Component {
 
         dispatch(requestingActions.start());
 
-        /* Get Saved Locations */
-        commonService.getLocations()
-            .then(locations => {
-                dispatch(requestingActions.stop());
-                if(locations.status === appConstants.REQUEST_SUCCESS){
-                    this.setState({locations : locations.data});
-                    this.addMarkersOnMap(locations.data);
-                }else if (locations.status === appConstants.REQUEST_ERROR){
-                    this.setState({componentError: locations.error})
-                }
+        try{
+            /* Get Saved Locations */
+            commonService.getLocations()
+                .then(locations => {
+                    dispatch(requestingActions.stop());
+                    if(locations.status === appConstants.REQUEST_SUCCESS){
+                        this.setState({locations : locations.data});
+                        if(window.tomtom)
+                            this.addMarkersOnMap(locations.data);
+                    }else if (locations.status === appConstants.REQUEST_ERROR){
+                        this.setState({componentError: locations.error})
+                    }
+                });
+
+            const map = window.tomtom.L.map('map', appHelpers.mapConfig());
+
+            //set default map location
+            map.setView([10, 10], appConstants.MAP_ZOOM_LEVEL);
+
+            // SearchBox with location button and Polish language
+            let searchBoxInstance = new window.tomtom.L.SearchBox(appHelpers.mapSearchBoxConfig());
+            searchBoxInstance.addTo(map);
+
+            // Add a marker to indicate the position of the result selected by the user
+            searchBoxInstance.on(searchBoxInstance.Events.ResultClicked, (result) => {
+                this.createMarker(result.data);
             });
 
-        const map = window.tomtom.L.map('map', appHelpers.mapConfig());
+            this.setState({map})
+        }catch (err){
+            this.setState({mapIsAvailable: false});
+            dispatch(errorActions.setError("Unable to Initialize map"))
 
-        //todo set default map location
-        map.setView([10, 10], appConstants.MAP_ZOOM_LEVEL);
+        }
 
-        // SearchBox with location button and Polish language
-        let searchBoxInstance = new window.tomtom.L.SearchBox(appHelpers.mapSearchBoxConfig());
-        searchBoxInstance.addTo(map);
-
-        // Add a marker to indicate the position of the result selected by the user
-        searchBoxInstance.on(searchBoxInstance.Events.ResultClicked, (result) => {
-            this.createMarker(result.data);
-        });
-
-        this.setState({map})
     };
 
     addMarkersOnMap = (location) =>{
@@ -107,15 +116,13 @@ class App extends React.Component {
             if(response.status === appConstants.REQUEST_SUCCESS){
                 const { locations } = this.state;
                 const location = response.data;
-                locations.push(location);
+                locations.unshift(location);
                 this.setState({locations});
                 this.addMarkerToMap(location);
             }else if (response.status === appConstants.REQUEST_ERROR){
                 dispatch(errorActions.setError(response.error));
             }
 
-        }).catch(err =>{
-            dispatch(requestingActions.stop());
         })
 
     };
@@ -183,12 +190,14 @@ class App extends React.Component {
                 }
             })
         }
-    }
+    };
 
     locateMarker = (e, target) => {
-        const { map } = this.state;
+        const { map, mapIsAvailable } = this.state;
         e.preventDefault();
-        map.setView([target.latitude, target.longitude], appConstants.MAP_EXTRA_ZOOM_LEVEL);
+        if(mapIsAvailable){
+            map.setView([target.latitude, target.longitude], appConstants.MAP_EXTRA_ZOOM_LEVEL);
+        }
     }
 
     render() {
