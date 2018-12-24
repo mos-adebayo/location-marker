@@ -9,5 +9,6 @@ export const appConstants = {
     CREATE_LOCATIONS : 'create_location',
     APP_ERROR : 'error',
 
-    MAP_ZOOM_LEVEL: 7
+    MAP_ZOOM_LEVEL: 8,
+    MAP_EXTRA_ZOOM_LEVEL: 12
 }

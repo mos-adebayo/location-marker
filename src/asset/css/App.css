@@ -4,6 +4,10 @@ body {
   width: 100%;
   height: 100%;
 }
+body,h1,h2,h3,h4,h5,p{
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+}
 
 #map {
   width: 100%;
@@ -23,4 +27,10 @@ html{height:100%}
 
 .location-item{
   background: #ffffff;
+}
+.empty-container{
+  margin: 15px 0;
+}
+.records-header{
+  margin: 10px 0;
 }
