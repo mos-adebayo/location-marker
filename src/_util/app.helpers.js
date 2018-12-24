@@ -3,6 +3,23 @@ import moment from "moment/moment";
 import {appConstants} from "../_constant";
 
 export const appHelpers = {
+    mapConfig : () => {
+      return {
+          source: appConstants.TOM_TOM_MAP_SOURCE,
+          key: appConstants.TOM_TOM_KEY,
+          basePath: '/sdk',
+          zoom: appConstants.MAP_ZOOM_LEVEL
+      }
+    },
+    mapSearchBoxConfig : () => {
+      return {
+          location: false,
+          language: 'pl-PL',
+          view: 'IN',
+          position: appConstants.TOM_TOM_SEARCH_BOX_POSITION,
+          serviceOptions: {unwrapBbox: true}
+      }
+    },
     formatDate: (d, format) => {
         return moment(d).format(format || "MMM DD, YYYY");
     },

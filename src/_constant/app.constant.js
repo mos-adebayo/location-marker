@@ -14,5 +14,11 @@ export const appConstants = {
     MAP_ZOOM_LEVEL: 8,
     MAP_EXTRA_ZOOM_LEVEL: 12,
     REQUEST_ERROR: 1,
-    REQUEST_SUCCESS: 2
-}
+    REQUEST_SUCCESS: 2,
+
+    /*App SDK Config*/
+    TOM_TOM_KEY: 'oxmt4h5p1PFToAykPhSSHQtoOfM35VVx',
+    TOM_TOM_MAP_SOURCE: 'vector',
+    TOM_TOM_SEARCH_BOX_POSITION: 'topright',
+
+};

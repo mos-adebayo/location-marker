@@ -8,6 +8,9 @@ import LocationItemsComponent from "./locations.items";
 import EmptyRecord from "../shared/EmptyRecord";
 import { AppErrorMessage, ComponentErrorMessage } from "../shared/PageError";
 import {errorActions} from "../../_actions/error.action";
+import {appHelpers} from "../../_util";
+import { Scrollbars } from 'react-custom-scrollbars';
+const documentHeight = window.innerHeight;
 
 class App extends React.Component {
     constructor(props) {
@@ -23,6 +26,10 @@ class App extends React.Component {
     }
 
     componentDidMount() {
+        /*Initialize APP SDK
+        * THIS has to be in the component according to the
+        * Documentation
+        * */
         const script = document.createElement('script');
         script.src = process.env.PUBLIC_URL + '/sdk/tomtom.min.js';
         document.body.appendChild(script);
@@ -36,6 +43,7 @@ class App extends React.Component {
 
         dispatch(requestingActions.start());
 
+        /* Get Saved Locations */
         commonService.getLocations()
             .then(locations => {
                 dispatch(requestingActions.stop());
@@ -47,24 +55,13 @@ class App extends React.Component {
                 }
             });
 
-        const map = window.tomtom.L.map('map', {
-            source: 'vector',
-            key: 'oxmt4h5p1PFToAykPhSSHQtoOfM35VVx',
-            basePath: '/sdk',
-            zoom: 15
-        });
-        //todo set map to current location
+        const map = window.tomtom.L.map('map', appHelpers.mapConfig());
+
+        //todo set default map location
         map.setView([10, 10], appConstants.MAP_ZOOM_LEVEL);
 
         // SearchBox with location button and Polish language
-        let searchBoxInstance = new window.tomtom.L.SearchBox({
-            location: true,
-            language: 'pl-PL',
-            view: 'IN',
-            position: 'topright',
-            serviceOptions: {unwrapBbox: true}
-
-        });
+        let searchBoxInstance = new window.tomtom.L.SearchBox(appHelpers.mapSearchBoxConfig());
         searchBoxInstance.addTo(map);
 
         // Add a marker to indicate the position of the result selected by the user
@@ -219,13 +216,13 @@ class App extends React.Component {
                         }
                         {((!componentError && !requesting) || (locations.length !== 0)) &&
                              (
-                                 <div>
+                                 <Scrollbars style={{ height: documentHeight }}>
                                      <div className="section">
                                          <h5 className={'col s12 records-header'}>
                                              My Locations
                                          </h5>
                                      </div>
-                                     <div>
+                                     <div className={'locations'}>
                                          {
                                              locations.map((item, key) => {
                                                  return (<div key={key} className={'col s6'}>
@@ -234,7 +231,7 @@ class App extends React.Component {
                                              })
                                          }
                                      </div>
-                                 </div>
+                                 </Scrollbars>
 
                              )
                         }
