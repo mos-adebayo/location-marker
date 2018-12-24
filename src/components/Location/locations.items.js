@@ -1,7 +1,7 @@
 import React from 'react';
 import {appHelpers} from "../../_util";
 
-const LocationItemsComponent = ({location, locateMarker, removeMarker}) => {
+const LocationItemComponent = ({location, locateMarker, removeMarker}) => {
     return (
         <div className="card">
             <div className="card-content">
@@ -39,4 +39,4 @@ const LocationItemsComponent = ({location, locateMarker, removeMarker}) => {
     );
 };
 
-export default LocationItemsComponent;
+export default LocationItemComponent;

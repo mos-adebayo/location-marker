@@ -4,7 +4,7 @@ import { commonService } from "../../_service";
 import Loader from "../shared/Loader";
 import {requestingActions} from "../../_actions/requesting.action";
 import {appConstants} from "../../_constant";
-import LocationItemsComponent from "./locations.items";
+import LocationItemComponent from "./locations.items";
 import EmptyRecord from "../shared/EmptyRecord";
 import { AppErrorMessage, ComponentErrorMessage } from "../shared/PageError";
 import {errorActions} from "../../_actions/error.action";
@@ -235,7 +235,7 @@ class App extends React.Component {
                                          {
                                              locations.map((item, key) => {
                                                  return (<div key={key} className={'col s6'}>
-                                                     <LocationItemsComponent location={item} locateMarker={this.locateMarker} removeMarker={this.removeMarker}/>
+                                                     <LocationItemComponent location={item} locateMarker={this.locateMarker} removeMarker={this.removeMarker}/>
                                                  </div>)
                                              })
                                          }
